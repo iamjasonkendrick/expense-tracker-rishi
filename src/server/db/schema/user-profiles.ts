@@ -1,26 +1,26 @@
-import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
-import { users } from './users';
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { users } from "./users";
 
-export const userProfiles = pgTable('user_profiles', {
-  id: text('id')
+export const userProfiles = pgTable("user_profiles", {
+  id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
 
-  userId: text('user_id')
+  userId: text("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => users.id, { onDelete: "cascade" }),
 
-  phoneNumber: text('phone_number'),
+  phoneNumber: text("phone_number"),
 
-  bio: text('bio'),
+  bio: text("bio"),
 
-  education: text('education'),
+  education: text("education"),
 
-  work: text('work'),
+  work: text("work"),
 
-  additionalInfo: text('additional_info'),
+  additionalInfo: text("additional_info"),
 
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

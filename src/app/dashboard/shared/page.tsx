@@ -10,8 +10,8 @@ export default function PlaceholderPage() {
         </CardHeader>
         <CardContent>
           <p className="text-slate-600">
-            The backend API contracts and database schemas for this module are fully designed and ready. 
-            The frontend UI implementation is scheduled for the next sprint.
+            The backend API contracts and database schemas for this module are fully designed and
+            ready. The frontend UI implementation is scheduled for the next sprint.
           </p>
         </CardContent>
       </Card>

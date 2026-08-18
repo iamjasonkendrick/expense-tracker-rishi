@@ -1,31 +1,31 @@
-import { pgTable, text, numeric, date, timestamp } from 'drizzle-orm/pg-core';
-import { users } from './users';
-import { categories } from './categories';
+import { date, numeric, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { categories } from "./categories";
+import { users } from "./users";
 
-export const expenses = pgTable('expenses', {
-  id: text('id')
+export const expenses = pgTable("expenses", {
+  id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
 
-  ownerId: text('owner_id')
+  ownerId: text("owner_id")
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => users.id, { onDelete: "cascade" }),
 
-  categoryId: text('category_id')
+  categoryId: text("category_id")
     .notNull()
-    .references(() => categories.id, { onDelete: 'cascade' }),
+    .references(() => categories.id, { onDelete: "cascade" }),
 
-  totalAmount: numeric('total_amount', { precision: 12, scale: 2 }).notNull(),
+  totalAmount: numeric("total_amount", { precision: 12, scale: 2 }).notNull(),
 
-  expenseDate: date('expense_date').notNull(),
+  expenseDate: date("expense_date").notNull(),
 
-  paymentMethod: text('payment_method').notNull().default('cash'),
+  paymentMethod: text("payment_method").notNull().default("cash"),
 
-  description: text('description'),
+  description: text("description"),
 
-  currencyCode: text('currency_code').notNull().default('INR'),
+  currencyCode: text("currency_code").notNull().default("INR"),
 
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

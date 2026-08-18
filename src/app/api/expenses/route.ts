@@ -1,8 +1,8 @@
+import { desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
 import { expenses } from "@/server/db/schema";
-import { eq, desc } from "drizzle-orm";
 
 // GET: Fetch all expenses for the logged-in user
 export async function GET(request: Request) {
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     const userId = session.user.id;
     const body = await request.json();
     const { amount, description } = body;
@@ -40,14 +40,17 @@ export async function POST(request: Request) {
     // If you get a category error, we can fix it, but this is the fastest path.
     // We will fetch the first category available for the user to satisfy the DB constraint.
     const { categories } = await import("@/server/db/schema");
-    
-    let userCategories = await db.select().from(categories).where(eq(categories.userId, userId));
+
+    const userCategories = await db.select().from(categories).where(eq(categories.userId, userId));
     let categoryId = userCategories[0]?.id;
 
     if (!categoryId) {
-       // Auto-create category if missing
-       const [newCat] = await db.insert(categories).values({ userId, name: "General", isSystem: true }).returning();
-       categoryId = newCat.id;
+      // Auto-create category if missing
+      const [newCat] = await db
+        .insert(categories)
+        .values({ userId, name: "General", isSystem: true })
+        .returning();
+      categoryId = newCat.id;
     }
 
     await db.insert(expenses).values({
@@ -55,7 +58,7 @@ export async function POST(request: Request) {
       categoryId: categoryId,
       totalAmount: amount.toString(),
       description,
-      expenseDate: new Date().toISOString().split('T')[0],
+      expenseDate: new Date().toISOString().split("T")[0],
     });
 
     return NextResponse.json({ success: true });

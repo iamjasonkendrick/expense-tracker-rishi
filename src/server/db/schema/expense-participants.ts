@@ -1,31 +1,31 @@
-import { pgTable, text, numeric, timestamp } from 'drizzle-orm/pg-core';
-import { users } from './users';
-import { expenses } from './expenses';
+import { numeric, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { expenses } from "./expenses";
+import { users } from "./users";
 
-export const expenseParticipants = pgTable('expense_participants', {
-  id: text('id')
+export const expenseParticipants = pgTable("expense_participants", {
+  id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
 
-  expenseId: text('expense_id')
+  expenseId: text("expense_id")
     .notNull()
-    .references(() => expenses.id, { onDelete: 'cascade' }),
+    .references(() => expenses.id, { onDelete: "cascade" }),
 
-  userId: text('user_id')
+  userId: text("user_id")
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => users.id, { onDelete: "cascade" }),
 
-  shareAmount: numeric('share_amount', { precision: 12, scale: 2 }).notNull(),
+  shareAmount: numeric("share_amount", { precision: 12, scale: 2 }).notNull(),
 
-  role: text('role').notNull().default('participant'),
+  role: text("role").notNull().default("participant"),
 
-  permission: text('permission').notNull().default('view'),
+  permission: text("permission").notNull().default("view"),
 
-  status: text('status').notNull().default('pending'),
+  status: text("status").notNull().default("pending"),
 
-  hiddenAt: timestamp('hidden_at'),
+  hiddenAt: timestamp("hidden_at"),
 
-  createdAt: timestamp('created_at').notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authClient } from "@/lib/auth-client";
 
 interface Income {
   id: string;
@@ -65,19 +65,31 @@ export default function IncomesPage() {
           <form onSubmit={handleAddIncome} className="flex gap-4 items-end">
             <div className="space-y-2 flex-1">
               <Label htmlFor="amount">Amount</Label>
-              <Input 
-                id="amount" type="number" placeholder="0.00" 
-                value={amount} onChange={(e) => setAmount(e.target.value)} required 
+              <Input
+                id="amount"
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-2 flex-1">
               <Label htmlFor="description">Description</Label>
-              <Input 
-                id="description" type="text" placeholder="e.g., Monthly Salary" 
-                value={description} onChange={(e) => setDescription(e.target.value)} required 
+              <Input
+                id="description"
+                type="text"
+                placeholder="e.g., Monthly Salary"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
               />
             </div>
-            <Button type="submit" disabled={loading} className="h-10 bg-emerald-600 hover:bg-emerald-700">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="h-10 bg-emerald-600 hover:bg-emerald-700"
+            >
               {loading ? "Adding..." : "Add Income"}
             </Button>
           </form>
@@ -94,10 +106,15 @@ export default function IncomesPage() {
           ) : (
             <div className="space-y-3">
               {incomes.map((income) => (
-                <div key={income.id} className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg shadow-sm">
+                <div
+                  key={income.id}
+                  className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg shadow-sm"
+                >
                   <div>
                     <p className="font-medium text-slate-900">{income.description || "Income"}</p>
-                    <p className="text-sm text-slate-500">{new Date(income.createdAt).toLocaleDateString()}</p>
+                    <p className="text-sm text-slate-500">
+                      {new Date(income.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
                   <p className="font-bold text-lg text-emerald-600">+₹{income.amount}</p>
                 </div>

@@ -3,10 +3,8 @@ import Link from "next/link";
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-slate-50">
-      
       {/* Sidebar */}
       <aside className="w-72 bg-slate-900 text-white flex flex-col hidden md:flex fixed h-full">
-        
         {/* Brand */}
         <div className="h-20 flex items-center px-8 border-b border-slate-800">
           <Link href="/dashboard">
@@ -21,32 +19,57 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
             Main Menu
           </p>
-          
-          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <span className="text-lg">📊</span> Dashboard
           </Link>
-          
-          <Link href="/dashboard/calendar" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+
+          <Link
+            href="/dashboard/calendar"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <span className="text-lg">📅</span> Calendar
           </Link>
-          
-          <Link href="/dashboard/incomes" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+
+          <Link
+            href="/dashboard/incomes"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <span className="text-lg">💰</span> Incomes
           </Link>
-          
-          <Link href="/dashboard/shared" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+
+          <Link
+            href="/dashboard/shared"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <span className="text-lg">🤝</span> Shared Expenses
+          </Link>
+
+          <Link
+            href="/dashboard/expenses"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
+            <span className="text-lg">📒</span> Expense Ledger
           </Link>
 
           <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mt-8 mb-3">
             Account
           </p>
-          
-          <Link href="/dashboard/notifications" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+
+          <Link
+            href="/dashboard/notifications"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <span className="text-lg">🔔</span> Notifications
           </Link>
-          
-          <Link href="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+
+          <Link
+            href="/dashboard/settings"
+            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+          >
             <span className="text-lg">⚙️</span> Settings
           </Link>
         </nav>
@@ -67,7 +90,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main Content Area */}
       <div className="flex-1 md:ml-72 flex flex-col min-h-screen">
-        
         {/* Top Header Bar */}
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-10">
           <div>
@@ -76,15 +98,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
-              {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString("en-IN", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </span>
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-8 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 p-8 overflow-auto">{children}</main>
       </div>
     </div>
   );

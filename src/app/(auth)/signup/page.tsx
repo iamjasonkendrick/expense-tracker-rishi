@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function SignupPage() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-emerald-600">Rupalytic</h1>
       </div>
-      
+
       <Card className="shadow-xl border-slate-200">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
@@ -53,29 +53,45 @@ export default function SignupPage() {
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input 
-                id="name" type="text" placeholder="Rishi Kumar" 
-                value={name} onChange={(e) => setName(e.target.value)} required 
+              <Input
+                id="name"
+                type="text"
+                placeholder="Rishi Kumar"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" type="email" placeholder="you@example.com" 
-                value={email} onChange={(e) => setEmail(e.target.value)} required 
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" type="password" placeholder="••••••••" 
-                value={password} onChange={(e) => setPassword(e.target.value)} required 
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
               />
             </div>
-            
+
             {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
 
-            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700"
+              disabled={loading}
+            >
               {loading ? "Creating Account..." : "Sign Up"}
             </Button>
           </form>

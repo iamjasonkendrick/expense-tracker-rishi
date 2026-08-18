@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { authClient } from "@/lib/auth-client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
-export default function ResetPasswordPage() {
+// We wrap the main component in Suspense because useSearchParams requires it in Next.js App Router
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -22,16 +23,13 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // If no token is found, show an error
   if (!token) {
     return (
       <div className="w-full max-w-md">
         <Card className="shadow-xl border-red-200">
           <CardHeader>
             <CardTitle className="text-red-600">Invalid Link</CardTitle>
-            <CardDescription>
-              This password reset link is invalid or has expired.
-            </CardDescription>
+            <CardDescription>This password reset link is invalid or has expired.</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/login">
@@ -47,7 +45,6 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError("");
 
-    // Validate passwords match
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -60,6 +57,7 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
 
+    // This uses the correct Better Auth client method
     const { error } = await authClient.resetPassword({
       newPassword,
       token,
@@ -71,7 +69,6 @@ export default function ResetPasswordPage() {
     } else {
       setSuccess(true);
       setLoading(false);
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         router.push("/login");
       }, 2000);
@@ -98,7 +95,7 @@ export default function ResetPasswordPage() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-emerald-600">Rupalytic</h1>
       </div>
-      
+
       <Card className="shadow-xl border-slate-200">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
@@ -106,18 +103,16 @@ export default function ResetPasswordPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword} className="space-y-4">
-            
-            {/* New Password */}
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
               <div className="relative">
-                <Input 
-                  id="newPassword" 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="••••••••" 
-                  value={newPassword} 
-                  onChange={(e) => setNewPassword(e.target.value)} 
-                  required 
+                <Input
+                  id="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
                   className="pr-10"
                 />
                 <button
@@ -130,32 +125,30 @@ export default function ResetPasswordPage() {
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm New Password</Label>
               <div className="relative">
-                <Input 
-                  id="confirmPassword" 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="••••••••" 
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)} 
-                  required 
+                <Input
+                  id="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
                   className="pr-10"
                 />
               </div>
             </div>
-            
-            {/* Error Message */}
+
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-600 font-medium">{error}</p>
               </div>
             )}
 
-            <Button 
-              type="submit" 
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" 
+            <Button
+              type="submit"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
               disabled={loading}
             >
               {loading ? "Resetting..." : "Reset Password"}
@@ -171,5 +164,16 @@ export default function ResetPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Next.js App Router requires Suspense when using useSearchParams
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
