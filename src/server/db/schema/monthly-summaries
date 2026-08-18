@@ -1,0 +1,30 @@
+import { pgTable, text, numeric, date, timestamp } from 'drizzle-orm/pg-core';
+import { users } from './users';
+
+export const monthlySummaries = pgTable('monthly_summaries', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  monthStartDate: date('month_start_date').notNull(),
+
+  regularIncome: numeric('regular_income', { precision: 12, scale: 2 }).notNull().default('0'),
+
+  extraIncome: numeric('extra_income', { precision: 12, scale: 2 }).notNull().default('0'),
+
+  totalIncome: numeric('total_income', { precision: 12, scale: 2 }).notNull().default('0'),
+
+  totalExpense: numeric('total_expense', { precision: 12, scale: 2 }).notNull().default('0'),
+
+  savings: numeric('savings', { precision: 12, scale: 2 }).notNull().default('0'),
+
+  currencyCode: text('currency_code').notNull().default('INR'),
+
+  insights: text('insights'),
+
+  generatedAt: timestamp('generated_at').notNull().defaultNow(),
+});
