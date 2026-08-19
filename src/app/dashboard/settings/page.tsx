@@ -1,61 +1,37 @@
 "use client";
 
-import { LogOut, Monitor, Moon, Palette, Settings, Shield, Sun, User } from "lucide-react";
+import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { useCurrency } from "@/contexts/currency-context";
-import { authClient } from "@/lib/auth-client";
-import type { CurrencyCode } from "@/lib/currency";
+import { useTheme } from "@/contexts/theme-context";
+import { CurrencyCode } from "@/lib/currency";
+import { User, Palette, Settings, Shield, LogOut, Moon, Sun, Monitor, Check } from "lucide-react";
 
 type SettingsTab = "profile" | "appearance" | "general" | "security";
+type ThemeOption = "light" | "dark" | "system";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const { currency, setCurrency } = useCurrency();
+  const { theme, setTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
   const [username, setUsername] = useState("");
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
   const [saving, setSaving] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [savedMessage, setSavedMessage] = useState(false);
 
-  // Load theme from localStorage
-  useEffect(() => {
-    const savedTheme =
-      (localStorage.getItem("rupalytic_theme") as "light" | "dark" | "system") || "light";
-    setTheme(savedTheme);
-    applyTheme(savedTheme);
-  }, []);
-
-  const applyTheme = (selectedTheme: "light" | "dark" | "system") => {
-    const root = document.documentElement;
-    if (selectedTheme === "dark") {
-      root.classList.add("dark");
-    } else if (selectedTheme === "light") {
-      root.classList.remove("dark");
-    } else {
-      // System preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) {
-        root.classList.add("dark");
-      } else {
-        root.classList.remove("dark");
-      }
-    }
-  };
-
-  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+  const handleThemeChange = (newTheme: ThemeOption) => {
     setTheme(newTheme);
-    localStorage.setItem("rupalytic_theme", newTheme);
-    applyTheme(newTheme);
   };
 
   const handleSignOut = async () => {
@@ -68,7 +44,8 @@ export default function SettingsPage() {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      alert("Settings saved successfully!");
+      setSavedMessage(true);
+      setTimeout(() => setSavedMessage(false), 3000);
     }, 800);
   };
 
@@ -83,14 +60,17 @@ export default function SettingsPage() {
     { id: "security" as SettingsTab, label: "Security", icon: Shield },
   ];
 
+  const themeOptions: { value: ThemeOption; label: string; description: string; icon: typeof Sun }[] = [
+    { value: "light", label: "Light", description: "Always use light mode", icon: Sun },
+    { value: "dark", label: "Dark", description: "Always use dark mode", icon: Moon },
+    { value: "system", label: "System", description: "Match your device settings", icon: Monitor },
+  ];
+
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Settings</h1>
-        <p className="text-slate-500 dark:text-slate-400">
-          Manage your Rupalytic account preferences.
-        </p>
+        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+        <p className="text-muted-foreground">Manage your Rupalytic account preferences.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
@@ -104,8 +84,8 @@ export default function SettingsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -117,33 +97,26 @@ export default function SettingsPage() {
 
         {/* Content Area */}
         <div className="flex-1 space-y-6">
+
           {/* PROFILE TAB */}
           {activeTab === "profile" && (
             <Card>
               <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your account details and public profile.</CardDescription>
+                <CardTitle className="text-foreground">Profile Information</CardTitle>
+                <CardDescription>Update your account details.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary">
                     {session.user.name?.charAt(0).toUpperCase() || "U"}
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      {session.user.name}
-                    </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {session.user.email}
-                    </p>
-                    <Badge variant="secondary" className="mt-1">
-                      Free Plan
-                    </Badge>
+                    <p className="font-semibold text-foreground">{session.user.name}</p>
+                    <p className="text-sm text-muted-foreground">{session.user.email}</p>
+                    <Badge variant="secondary" className="mt-1">Free Plan</Badge>
                   </div>
                 </div>
-
                 <Separator />
-
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
@@ -153,37 +126,19 @@ export default function SettingsPage() {
                         placeholder="e.g., rupalytic_pro"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        className="bg-background"
                       />
                       <Button variant="outline" onClick={handleSave} disabled={saving}>
                         {saving ? "Saving..." : "Change"}
                       </Button>
                     </div>
-                    <p className="text-xs text-slate-400">
-                      You can change your username up to 2 times per day.
-                    </p>
+                    <p className="text-xs text-muted-foreground">You can change your username up to 2 times per day.</p>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={session.user.email || ""}
-                      disabled
-                      className="bg-slate-50 dark:bg-slate-800 text-slate-500"
-                    />
-                    <p className="text-xs text-slate-400">
-                      Email cannot be changed for security reasons.
-                    </p>
-                  </div>
-
-                  <Button
-                    className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900"
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    {saving ? "Saving Changes..." : "Save Changes"}
-                  </Button>
+                  {savedMessage && (
+                    <div className="p-3 bg-primary/10 rounded-lg">
+                      <p className="text-sm text-primary font-medium">Settings saved successfully!</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -193,52 +148,48 @@ export default function SettingsPage() {
           {activeTab === "appearance" && (
             <Card>
               <CardHeader>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Customize how Rupalytic looks on your device.</CardDescription>
+                <CardTitle className="text-foreground">Appearance</CardTitle>
+                <CardDescription>Customize how Rupalytic looks. Changes are saved automatically to your account.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <Label className="text-base font-medium">Theme</Label>
+                  <Label className="text-base font-medium text-foreground">Theme Mode</Label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <button
-                      onClick={() => handleThemeChange("light")}
-                      className={`p-4 rounded-lg border-2 transition-colors ${
-                        theme === "light"
-                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950"
-                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
-                      }`}
-                    >
-                      <Sun className="h-6 w-6 mx-auto mb-2 text-amber-500" />
-                      <p className="text-sm font-medium text-center">Light</p>
-                    </button>
-
-                    <button
-                      onClick={() => handleThemeChange("dark")}
-                      className={`p-4 rounded-lg border-2 transition-colors ${
-                        theme === "dark"
-                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950"
-                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
-                      }`}
-                    >
-                      <Moon className="h-6 w-6 mx-auto mb-2 text-slate-600 dark:text-slate-300" />
-                      <p className="text-sm font-medium text-center">Dark</p>
-                    </button>
-
-                    <button
-                      onClick={() => handleThemeChange("system")}
-                      className={`p-4 rounded-lg border-2 transition-colors ${
-                        theme === "system"
-                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950"
-                          : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
-                      }`}
-                    >
-                      <Monitor className="h-6 w-6 mx-auto mb-2 text-blue-500" />
-                      <p className="text-sm font-medium text-center">System</p>
-                    </button>
+                    {themeOptions.map((option) => {
+                      const Icon = option.icon;
+                      const isActive = theme === option.value;
+                      return (
+                        <button
+                          key={option.value}
+                          onClick={() => handleThemeChange(option.value)}
+                          className={`relative p-5 rounded-xl border-2 transition-all text-left ${
+                            isActive
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border hover:border-primary/30 hover:bg-muted/50"
+                          }`}
+                        >
+                          {isActive && (
+                            <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                              <Check className="h-3 w-3 text-primary-foreground" />
+                            </div>
+                          )}
+                          <Icon className={`h-6 w-6 mb-3 ${
+                            option.value === "light" ? "text-amber-500" :
+                            option.value === "dark" ? "text-slate-600 dark:text-slate-300" :
+                            "text-blue-500"
+                          }`} />
+                          <p className="text-sm font-semibold text-foreground">{option.label}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <p className="text-xs text-slate-400">
-                    "System" will automatically match your device's light/dark mode setting.
-                  </p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      💡 Your theme preference is saved to your account and will sync across all devices.
+                      Currently active: <strong className="text-foreground">{theme === "system" ? "System (auto)" : theme.charAt(0).toUpperCase() + theme.slice(1)}</strong>
+                    </p>
+                  </div>
                 </div>
 
                 <Separator />
@@ -246,20 +197,15 @@ export default function SettingsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">Compact Mode</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Reduce spacing for denser layouts
-                      </p>
+                      <p className="font-medium text-foreground">Compact Mode</p>
+                      <p className="text-sm text-muted-foreground">Reduce spacing for denser layouts</p>
                     </div>
                     <Switch />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">Animations</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Enable smooth transitions and effects
-                      </p>
+                      <p className="font-medium text-foreground">Animations</p>
+                      <p className="text-sm text-muted-foreground">Enable smooth transitions and effects</p>
                     </div>
                     <Switch defaultChecked />
                   </div>
@@ -272,7 +218,7 @@ export default function SettingsPage() {
           {activeTab === "general" && (
             <Card>
               <CardHeader>
-                <CardTitle>General Settings</CardTitle>
+                <CardTitle className="text-foreground">General Settings</CardTitle>
                 <CardDescription>Configure your default preferences.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -280,7 +226,7 @@ export default function SettingsPage() {
                   <Label htmlFor="currency">Base Currency</Label>
                   <select
                     id="currency"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-slate-800"
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
                   >
@@ -289,35 +235,17 @@ export default function SettingsPage() {
                     <option value="EUR">EUR - Euro (€)</option>
                     <option value="GBP">GBP - British Pound (£)</option>
                   </select>
-                  <p className="text-xs text-slate-400">
-                    This currency will be used across all your financial displays.
-                  </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="language">Language</Label>
                   <select
                     id="language"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-slate-800"
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
                     defaultValue="en"
                   >
                     <option value="en">English</option>
                     <option value="hi">हिन्दी (Hindi)</option>
-                    <option value="es">Español (Spanish)</option>
-                    <option value="fr">Français (French)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dateformat">Date Format</Label>
-                  <select
-                    id="dateformat"
-                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm dark:bg-slate-800"
-                    defaultValue="dd/mm/yyyy"
-                  >
-                    <option value="dd/mm/yyyy">DD/MM/YYYY</option>
-                    <option value="mm/dd/yyyy">MM/DD/YYYY</option>
-                    <option value="yyyy-mm-dd">YYYY-MM-DD</option>
                   </select>
                 </div>
 
@@ -326,22 +254,15 @@ export default function SettingsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">
-                        Email Notifications
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Receive email alerts for important updates
-                      </p>
+                      <p className="font-medium text-foreground">Email Notifications</p>
+                      <p className="text-sm text-muted-foreground">Receive email alerts for important updates</p>
                     </div>
                     <Switch defaultChecked />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">Weekly Reports</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Get a weekly summary of your spending
-                      </p>
+                      <p className="font-medium text-foreground">Weekly Reports</p>
+                      <p className="text-sm text-muted-foreground">Get a weekly summary of your spending</p>
                     </div>
                     <Switch />
                   </div>
@@ -355,88 +276,40 @@ export default function SettingsPage() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Password</CardTitle>
+                  <CardTitle className="text-foreground">Password</CardTitle>
                   <CardDescription>Change your account password.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="current-password">Current Password</Label>
-                    <Input id="current-password" type="password" placeholder="••••••••" />
+                    <Input id="current-password" type="password" placeholder="••••••••" className="bg-background" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="new-password">New Password</Label>
-                    <Input id="new-password" type="password" placeholder="••••••••" />
+                    <Input id="new-password" type="password" placeholder="••••••••" className="bg-background" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm New Password</Label>
-                    <Input id="confirm-password" type="password" placeholder="••••••••" />
+                    <Input id="confirm-password" type="password" placeholder="••••••••" className="bg-background" />
                   </div>
-                  <Button className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900">
-                    Update Password
-                  </Button>
+                  <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Update Password</Button>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="border-destructive/30">
                 <CardHeader>
-                  <CardTitle>Active Sessions</CardTitle>
-                  <CardDescription>Manage where you're logged in.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <Monitor className="h-5 w-5 text-slate-500" />
-                      <div>
-                        <p className="font-medium text-slate-900 dark:text-white">This Device</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                          Current session • Active now
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-                    >
-                      Active
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Danger Zone */}
-              <Card className="border-red-200 dark:border-red-900">
-                <CardHeader>
-                  <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+                  <CardTitle className="text-destructive">Danger Zone</CardTitle>
                   <CardDescription>Irreversible actions for your account.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-900 dark:text-white">Sign Out</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Sign out of Rupalytic on this device
-                      </p>
+                      <p className="font-medium text-foreground">Sign Out</p>
+                      <p className="text-sm text-muted-foreground">Sign out of Rupalytic on this device</p>
                     </div>
                     <Button variant="destructive" onClick={handleSignOut} disabled={signingOut}>
                       <LogOut className="h-4 w-4 mr-2" />
                       {signingOut ? "Signing out..." : "Sign Out"}
-                    </Button>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-slate-900 dark:text-white">Delete Account</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Permanently delete your account and all data
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="border-red-300 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-                    >
-                      Delete Account
                     </Button>
                   </div>
                 </CardContent>

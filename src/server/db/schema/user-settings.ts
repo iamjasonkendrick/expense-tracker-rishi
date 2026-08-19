@@ -1,30 +1,27 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
 export const userSettings = pgTable("user_settings", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-
-  userId: text("user_id")
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: varchar("user_id", { length: 255 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-
-  themeMode: text("theme_mode").notNull().default("system"),
-
-  accentColor: text("accent_color").notNull().default("#10b981"),
-
-  headerColor: text("header_color").notNull().default("#0f172a"),
-
-  footerColor: text("footer_color").notNull().default("#0f172a"),
-
-  language: text("language").notNull().default("en"),
-
-  currencyCode: text("currency_code").notNull().default("INR"),
-
-  timezone: text("timezone").notNull().default("UTC"),
-
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  
+  // Theme preference: "light" | "dark" | "system"
+  theme: varchar("theme", { length: 10 }).notNull().default("system"),
+  
+  // Accent color preference (for Priority 2.2 later)
+  accentColor: varchar("accent_color", { length: 20 }).default("teal"),
+  
+  // Language preference
+  language: varchar("language", { length: 5 }).default("en"),
+  
+  // Date format preference
+  dateFormat: varchar("date_format", { length: 20 }).default("dd/mm/yyyy"),
+  
+  // Currency (we can migrate localStorage currency here later)
+  currency: varchar("currency", { length: 5 }).default("INR"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

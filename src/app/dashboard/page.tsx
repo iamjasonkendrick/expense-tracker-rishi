@@ -1,28 +1,19 @@
 "use client";
 
-import { Activity, Calendar, DollarSign, TrendingDown, TrendingUp, Wallet } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useState, useEffect, useCallback } from "react";
+import { authClient } from "@/lib/auth-client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AddExpenseModal from "@/components/modals/add-expense-modal";
 import AddIncomeModal from "@/components/modals/add-income-modal";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from "recharts";
+import {
+  TrendingUp, TrendingDown, Wallet, Activity, Calendar,
+  DollarSign, BarChart3, Receipt
+} from "lucide-react";
 import { useCurrency } from "@/contexts/currency-context";
-import { authClient } from "@/lib/auth-client";
 import { formatCurrency } from "@/lib/currency";
 
 interface Expense {
@@ -39,7 +30,7 @@ interface Income {
   createdAt: string;
 }
 
-const COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6"];
+const CHART_COLORS = ["#6499c9", "#4da8a5", "#7fb88a", "#d4a96a", "#d48a7a", "#9a8ab8"];
 
 export default function DashboardPage() {
   const { data: session } = authClient.useSession();
@@ -49,7 +40,10 @@ export default function DashboardPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [expRes, incRes] = await Promise.all([fetch("/api/expenses"), fetch("/api/incomes")]);
+      const [expRes, incRes] = await Promise.all([
+        fetch("/api/expenses"),
+        fetch("/api/incomes"),
+      ]);
       if (expRes.ok) setExpenses(await expRes.json());
       if (incRes.ok) setIncomes(await incRes.json());
     } catch (error) {
@@ -62,37 +56,30 @@ export default function DashboardPage() {
   }, [session, fetchData]);
 
   if (!session) {
-    return <div className="flex items-center justify-center h-full">Loading...</div>;
+    return <div className="flex items-center justify-center h-full text-foreground">Loading...</div>;
   }
 
-  // Calculate totals
   const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.totalAmount || "0"), 0);
   const totalIncome = incomes.reduce((sum, inc) => sum + parseFloat(inc.amount || "0"), 0);
   const balance = totalIncome - totalExpenses;
   const totalTransactions = expenses.length + incomes.length;
   const avgExpense = expenses.length > 0 ? totalExpenses / expenses.length : 0;
 
-  // Get current month data
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
-  const thisMonthExpenses = expenses.filter((exp) => {
-    const date = new Date(exp.createdAt);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
-  const thisMonthIncome = incomes.filter((inc) => {
-    const date = new Date(inc.createdAt);
-    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-  });
-  const thisMonthExpenseTotal = thisMonthExpenses.reduce(
-    (sum, exp) => sum + parseFloat(exp.totalAmount || "0"),
-    0,
-  );
-  const thisMonthIncomeTotal = thisMonthIncome.reduce(
-    (sum, inc) => sum + parseFloat(inc.amount || "0"),
-    0,
-  );
+  const thisMonthExpenseTotal = expenses
+    .filter((exp) => {
+      const d = new Date(exp.createdAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, exp) => sum + parseFloat(exp.totalAmount || "0"), 0);
+  const thisMonthIncomeTotal = incomes
+    .filter((inc) => {
+      const d = new Date(inc.createdAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    })
+    .reduce((sum, inc) => sum + parseFloat(inc.amount || "0"), 0);
 
-  // Prepare monthly trend data (last 6 months)
   const monthlyTrendData = Array.from({ length: 6 }, (_, i) => {
     const date = new Date(currentYear, currentMonth - (5 - i), 1);
     const month = date.getMonth();
@@ -101,26 +88,20 @@ export default function DashboardPage() {
 
     const monthExpenses = expenses
       .filter((exp) => {
-        const expDate = new Date(exp.createdAt);
-        return expDate.getMonth() === month && expDate.getFullYear() === year;
+        const d = new Date(exp.createdAt);
+        return d.getMonth() === month && d.getFullYear() === year;
       })
       .reduce((sum, exp) => sum + parseFloat(exp.totalAmount || "0"), 0);
-
     const monthIncomes = incomes
       .filter((inc) => {
-        const incDate = new Date(inc.createdAt);
-        return incDate.getMonth() === month && incDate.getFullYear() === year;
+        const d = new Date(inc.createdAt);
+        return d.getMonth() === month && d.getFullYear() === year;
       })
       .reduce((sum, inc) => sum + parseFloat(inc.amount || "0"), 0);
 
-    return {
-      month: monthName,
-      expenses: monthExpenses,
-      income: monthIncomes,
-    };
+    return { month: monthName, expenses: monthExpenses, income: monthIncomes };
   });
 
-  // Category breakdown for pie chart
   const categoryData = expenses
     .reduce((acc: { name: string; value: number }[], exp) => {
       const category = exp.description || "Other";
@@ -134,172 +115,237 @@ export default function DashboardPage() {
     }, [])
     .slice(0, 6);
 
+  const recentTransactions = [
+    ...expenses.slice(0, 5).map((e) => ({ ...e, type: "expense" as const })),
+    ...incomes.slice(0, 5).map((i) => ({ ...i, type: "income" as const })),
+  ]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 6);
+
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      {/* Header with Modal Buttons */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Financial Overview</h1>
-          <p className="text-slate-500">Track your income, expenses, and balance at a glance.</p>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* ===== HERO HEADER ===== */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/90 via-primary to-primary-600 dark:from-primary/80 dark:via-primary/90 dark:to-primary p-8 text-primary-foreground shadow-elevated">
+        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              <BarChart3 className="h-8 w-8" />
+              Financial Overview
+            </h1>
+            <p className="text-primary-foreground/80 mt-2">
+              Track your income, expenses, and balance at a glance.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <AddIncomeModal onIncomeAdded={fetchData} />
+            <AddExpenseModal onExpenseAdded={fetchData} />
+          </div>
         </div>
-        <div className="flex gap-3">
-          <AddIncomeModal onIncomeAdded={fetchData} />
-          <AddExpenseModal onExpenseAdded={fetchData} />
-        </div>
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 right-32 w-32 h-32 bg-white/10 rounded-full translate-y-1/2"></div>
+        <div className="absolute bottom-0 left-1/2 w-24 h-24 bg-white/5 rounded-full translate-y-1/3"></div>
       </div>
 
-      {/* Summary Cards - 6 Cards */}
+      {/* ===== SUMMARY CARDS ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card className="bg-emerald-50 border-emerald-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-700 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" /> Total Income
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-emerald-600">
-              {formatCurrency(totalIncome, currency)}
-            </p>
+        {/* Total Income */}
+        <Card className="border-l-4 border-l-income shadow-soft hover:shadow-card transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3 text-income" /> Total Income
+                </p>
+                <p className="text-2xl font-bold text-income mt-2">
+                  {formatCurrency(totalIncome, currency)}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-income-muted flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-income" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-red-50 border-red-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-red-700 flex items-center gap-2">
-              <TrendingDown className="h-4 w-4" /> Total Expenses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-red-600">
-              {formatCurrency(totalExpenses, currency)}
-            </p>
+        {/* Total Expenses */}
+        <Card className="border-l-4 border-l-expense shadow-soft hover:shadow-card transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <TrendingDown className="h-3 w-3 text-expense" /> Total Expenses
+                </p>
+                <p className="text-2xl font-bold text-expense mt-2">
+                  {formatCurrency(totalExpenses, currency)}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-expense-muted flex items-center justify-center">
+                <TrendingDown className="h-6 w-6 text-expense" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700 flex items-center gap-2">
-              <Wallet className="h-4 w-4" /> Balance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className={`text-2xl font-bold ${balance >= 0 ? "text-blue-600" : "text-red-600"}`}>
-              {formatCurrency(balance, currency)}
-            </p>
+        {/* Balance */}
+        <Card className="border-l-4 border-l-primary shadow-soft hover:shadow-card transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <Wallet className="h-3 w-3 text-primary" /> Balance
+                </p>
+                <p className={`text-2xl font-bold mt-2 ${balance >= 0 ? "text-primary" : "text-expense"}`}>
+                  {formatCurrency(balance, currency)}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Wallet className="h-6 w-6 text-primary" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50 border-purple-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
-              <Activity className="h-4 w-4" /> Transactions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-purple-600">{totalTransactions}</p>
+        {/* Transactions Count */}
+        <Card className="border-l-4 border-l-chart-2 shadow-soft hover:shadow-card transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <Activity className="h-3 w-3 text-chart-2" /> Transactions
+                </p>
+                <p className="text-2xl font-bold text-foreground mt-2">{totalTransactions}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-chart-2/10 flex items-center justify-center">
+                <Activity className="h-6 w-6 text-chart-2" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-orange-50 border-orange-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-700 flex items-center gap-2">
-              <DollarSign className="h-4 w-4" /> Avg Expense
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-orange-600">
-              {formatCurrency(avgExpense, currency)}
-            </p>
+        {/* Avg Expense */}
+        <Card className="border-l-4 border-l-chart-4 shadow-soft hover:shadow-card transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <DollarSign className="h-3 w-3 text-chart-4" /> Avg Expense
+                </p>
+                <p className="text-2xl font-bold text-foreground mt-2">
+                  {formatCurrency(avgExpense, currency)}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-chart-4/10 flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-chart-4" />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-teal-50 border-teal-200">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-teal-700 flex items-center gap-2">
-              <Calendar className="h-4 w-4" /> This Month
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-emerald-600">
-              Income: {formatCurrency(thisMonthIncomeTotal, currency)}
-            </p>
-            <p className="text-sm text-red-600">
-              Expense: {formatCurrency(thisMonthExpenseTotal, currency)}
-            </p>
+        {/* This Month */}
+        <Card className="border-l-4 border-l-chart-3 shadow-soft hover:shadow-card transition-shadow">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3 text-chart-3" /> This Month
+                </p>
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm text-income font-medium">
+                    Income: {formatCurrency(thisMonthIncomeTotal, currency)}
+                  </p>
+                  <p className="text-sm text-expense font-medium">
+                    Expense: {formatCurrency(thisMonthExpenseTotal, currency)}
+                  </p>
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-chart-3/10 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-chart-3" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts Section */}
+      {/* ===== CHARTS SECTION ===== */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Trend Line Chart */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Monthly Trend (Last 6 Months)</CardTitle>
+        <Card className="lg:col-span-2 shadow-soft">
+          <CardHeader className="bg-muted/30 border-b border-border">
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Monthly Trend (Last 6 Months)
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyTrendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="month" className="text-xs" tick={{ fill: "currentColor", fontSize: 12 }} />
+                <YAxis className="text-xs" tick={{ fill: "currentColor", fontSize: 12 }} />
                 <Tooltip
                   formatter={(value, name) => [
                     formatCurrency(value as number, currency),
                     name === "income" ? "Income" : "Expenses",
                   ]}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))",
+                  }}
                 />
                 <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="income"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  name="Income"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="expenses"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  name="Expenses"
-                />
+                <Line type="monotone" dataKey="income" stroke="#4da8a5" strokeWidth={2.5} name="Income" dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="expenses" stroke="#d48a7a" strokeWidth={2.5} name="Expenses" dot={{ r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Bar Chart: Income vs Expenses */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Income vs Expenses</CardTitle>
+        {/* Income vs Expenses Bar Chart */}
+        <Card className="shadow-soft">
+          <CardHeader className="bg-muted/30 border-b border-border">
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Activity className="h-5 w-5 text-primary" />
+              Income vs Expenses
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
                 data={[
-                  { name: "Income", amount: totalIncome },
-                  { name: "Expenses", amount: totalExpenses },
+                  { name: "Income", amount: totalIncome, fill: "#4da8a5" },
+                  { name: "Expenses", amount: totalExpenses, fill: "#d48a7a" },
                 ]}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" />
-                <YAxis />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="name" tick={{ fill: "currentColor", fontSize: 12 }} />
+                <YAxis tick={{ fill: "currentColor", fontSize: 12 }} />
                 <Tooltip
                   formatter={(value) => [formatCurrency(value as number, currency), "Amount"]}
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))",
+                  }}
                 />
-                <Bar dataKey="amount" radius={[4, 4, 0, 0]} fill="#3b82f6" />
+                <Bar dataKey="amount" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Pie Chart: Expense Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Expense Breakdown</CardTitle>
+        {/* Expense Breakdown Pie Chart */}
+        <Card className="shadow-soft">
+          <CardHeader className="bg-muted/30 border-b border-border">
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Receipt className="h-5 w-5 text-primary" />
+              Expense Breakdown
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {categoryData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
@@ -309,74 +355,106 @@ export default function DashboardPage() {
                     cy="50%"
                     labelLine={false}
                     label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                    outerRadius={100}
-                    fill="#8884d8"
+                    outerRadius={90}
                     dataKey="value"
                   >
                     {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
                     formatter={(value) => [formatCurrency(value as number, currency), "Amount"]}
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      color: "hsl(var(--foreground))",
+                    }}
                   />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[300px] text-slate-400">
-                No expense data to display. Add your first expense!
+              <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                <Receipt className="h-12 w-12 mb-3 opacity-50" />
+                <p className="font-medium">No expense data</p>
+                <p className="text-sm mt-1">Add your first expense to see the breakdown</p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
+      {/* ===== RECENT TRANSACTIONS ===== */}
+      <Card className="shadow-soft overflow-hidden">
+        <CardHeader className="bg-muted/30 border-b border-border">
+          <CardTitle className="flex items-center justify-between text-foreground">
+            <span className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Recent Transactions
+            </span>
+            <span className="text-sm font-normal text-muted-foreground">
+              Last {recentTransactions.length} transactions
+            </span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {expenses.slice(0, 5).map((expense) => (
-              <div
-                key={expense.id}
-                className="flex justify-between items-center p-3 bg-red-50 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{expense.description || "Expense"}</p>
-                  <p className="text-sm text-slate-500">
-                    {new Date(expense.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <p className="font-bold text-red-600">
-                  -{formatCurrency(parseFloat(expense.totalAmount || "0"), currency)}
-                </p>
-              </div>
-            ))}
-            {incomes.slice(0, 5).map((income) => (
-              <div
-                key={income.id}
-                className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{income.description || "Income"}</p>
-                  <p className="text-sm text-slate-500">
-                    {new Date(income.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <p className="font-bold text-emerald-600">
-                  +{formatCurrency(parseFloat(income.amount || "0"), currency)}
-                </p>
-              </div>
-            ))}
-            {expenses.length === 0 && incomes.length === 0 && (
-              <p className="text-slate-500 text-center py-4">
-                No transactions yet. Add your first income or expense!
-              </p>
-            )}
-          </div>
+        <CardContent className="pt-6">
+          {recentTransactions.length > 0 ? (
+            <div className="space-y-3">
+              {recentTransactions.map((tx) => {
+                const isExpense = tx.type === "expense";
+                const amount = isExpense
+                  ? parseFloat((tx as Expense).totalAmount || "0")
+                  : parseFloat((tx as Income).amount || "0");
+                const description = tx.description || (isExpense ? "Expense" : "Income");
+
+                return (
+                  <div
+                    key={tx.id}
+                    className={`flex justify-between items-center p-4 rounded-lg border transition-colors ${
+                      isExpense
+                        ? "bg-expense-muted/50 border-expense/20 hover:bg-expense-muted"
+                        : "bg-income-muted/50 border-income/20 hover:bg-income-muted"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isExpense ? "bg-expense/20" : "bg-income/20"
+                        }`}
+                      >
+                        {isExpense ? (
+                          <TrendingDown className={`h-5 w-5 text-expense`} />
+                        ) : (
+                          <TrendingUp className={`h-5 w-5 text-income`} />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{description}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(tx.createdAt).toLocaleDateString("en-IN", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <p className={`font-bold text-lg ${isExpense ? "text-expense" : "text-income"}`}>
+                      {isExpense ? "-" : "+"}
+                      {formatCurrency(amount, currency)}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Receipt className="h-12 w-12 mb-3 opacity-50" />
+              <p className="font-medium">No transactions yet</p>
+              <p className="text-sm mt-1">Add your first income or expense to get started</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

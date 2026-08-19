@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandLogo from "@/components/brand-logo";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,9 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Brand */}
         <div className="h-20 flex items-center px-8 border-b border-slate-800">
           <Link href="/dashboard">
-            <h1 className="text-2xl font-bold tracking-tight cursor-pointer">
-              Rupa<span className="text-emerald-400">lytic</span>
-            </h1>
+            <BrandLogo onDark size="lg" />
           </Link>
         </div>
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Lora, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { CurrencyProvider } from "@/contexts/currency-context";
+import { ThemeProvider } from "@/contexts/theme-context";
 import { cn } from "@/lib/utils";
 
 const playfairDisplayHeading = Playfair_Display({ subsets: ["latin"], variable: "--font-heading" });
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         "h-full",
         "antialiased",
@@ -38,7 +40,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       )}
     >
       <body className="min-h-full flex flex-col">
-        <CurrencyProvider>{children}</CurrencyProvider>
+        <ThemeProvider>
+          <CurrencyProvider>
+            {children}
+          </CurrencyProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
